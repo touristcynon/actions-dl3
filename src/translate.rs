@@ -16,14 +16,11 @@ type Tmt = TencentClient<HttpsConnector<HttpConnector>>;
 
 async fn translate_srt_file(
     srt_file: impl AsRef<Path>,
-    mut lang: &str,
+    lang: &str,
     translator: &Tmt,
 ) -> Result<(), io::Error> {
     let mut subtitle_stream = SubtitleStream::load_from_file(srt_file.as_ref())?;
     let target = if lang.contains("zh") { "en" } else { "zh" };
-    if lang.contains("en") {
-        lang = "en";
-    }
     let mut subtitle_map: HashMap<String, Vec<u16>> = HashMap::new();
     let mut to_translate = String::new();
     for sub in subtitle_stream.iter() {
@@ -47,12 +44,12 @@ async fn translate_srt_file(
     }
     // TMT, Baidu quota is 2000
     let translated = if to_translate.len() < 2000 {
-        text_translate(translator, &to_translate, lang, target).await?
+        text_translate(translator, &to_translate, target).await?
     } else {
         let subtitles = split_text_by_word(2000, &to_translate);
         let mut translated_text = String::new();
         for sub in subtitles {
-            let translated = text_translate(translator, sub, lang, target).await?;
+            let translated = text_translate(translator, sub, target).await?;
             translated_text.push_str(&translated);
             tokio::time::sleep(Duration::from_secs(6)).await;
         }
@@ -87,12 +84,7 @@ async fn translate_srt_file(
     Ok(())
 }
 
-async fn text_translate(
-    translator: &Tmt,
-    text: &str,
-    from: &str,
-    target: &str,
-) -> Result<String, io::Error> {
+async fn text_translate(translator: &Tmt, text: &str, target: &str) -> Result<String, io::Error> {
     let Ok(project_id) = std::env::var("TENCENT_PROJECT_ID") else {
         return Err(io::Error::new(io::ErrorKind::Other, "project id not exist"));
     };
@@ -104,7 +96,7 @@ async fn text_translate(
         .text_translate()
         .project_id(project_id.parse().unwrap())
         .region(region.as_str())
-        .source(from)
+        .source("auto")
         .untranslated_text(SPLIT_LABEL)
         .target(target)
         .source_text(text)
