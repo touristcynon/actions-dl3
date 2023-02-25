@@ -1,0 +1,46 @@
+# https://github.com/marketplace/actions/automatic-releases
+name: release-action
+
+on:
+  push:
+    branches: [ main ]
+  # schedule:
+  #   - cron: '0 8 * * 0'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: download
+        run: |
+          sudo apt-get update
+          sudo apt-get install ffmpeg curl atomicparsley aria2 -y
+          curl -LJO https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux
+          chmod +x ./yt-dlp_linux
+          ./yt-dlp_linux --config-location dl.conf
+      - name: translate
+        env: 
+          TENCENT_ID: ${{ secrets.TENCENT_ID }}
+          TENCENT_KEY: ${{ secrets.TENCENT_KEY }}
+          TENCENT_PROJECT_ID: ${{ secrets.TENCENT_PROJECT_ID }}
+          TENCENT_REGION: ${{ secrets.TENCENT_REGION }}
+        run: |
+          sudo apt-get install -y fontconfig fonts-wqy-zenhei
+          fc-cache -fv
+          cargo run --release
+      - name: packup
+        run: |
+          tar -czf downloads.tgz ./downloads
+          rm -rf downloads
+      - name: release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: ${{ github.run_id }}
+          title: ${{ github.run_id }}
+          prerelease: false
+          files: |
+            downloads.tgz
