@@ -71,11 +71,13 @@ async fn translate_srt_file(
                 part_translated.trim().to_string()
             };
 
-        let idxs = subtitle_map
-            .remove(part_translate)
-            .unwrap_or_else(|| panic!("none {}", part_translate));
+        let Some(idxs) = subtitle_map.remove(part_translate) else {
+            continue;
+        };
         for idx in idxs {
-            let sub = subtitle_stream.get_mut(idx as usize).unwrap();
+            let Some(sub) = subtitle_stream.get_mut(idx as usize) else {
+                continue;
+            };
             sub.text = format!("{}\n{}", part_translated, part_translate);
         }
     }
