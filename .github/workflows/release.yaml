@@ -33,7 +33,7 @@ jobs:
           cargo run --release
       - name: packup
         run: |
-          tar -czf downloads.tgz ./downloads
+          tar -czf ${{ github.run_id }}-downloads.tgz ./downloads
           rm -rf downloads
       - name: release
         uses: marvinpinto/action-automatic-releases@latest
@@ -43,4 +43,4 @@ jobs:
           title: ${{ github.run_id }}
           prerelease: false
           files: |
-            downloads.tgz
+            ${{ github.run_id }}-downloads.tgz
