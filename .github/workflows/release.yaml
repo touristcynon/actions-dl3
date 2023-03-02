@@ -34,8 +34,8 @@ jobs:
       - name: packup
         run: |
           mv downloads ${{ github.run_id }}-downloads
-          tar -czf ${{ github.run_id }}-downloads.tgz ${{ github-run_id }}-downloads
-          rm -rf ${{ github-run_id }}-downloads
+          tar -czf ${{ github.run_id }}-downloads.tgz ${{ github.run_id }}-downloads
+          rm -rf ${{ github.run_id }}-downloads
       - name: release
         uses: marvinpinto/action-automatic-releases@latest
         with:
